@@ -1,326 +1,261 @@
-#include <stdio.h>
-#include <conio.h>
-#include <stdlib.h>
 
+#include"cc215.h"
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<conio.h>
+char ch='!';
 
-//Defining the node for the linedlist
-struct Node
-{	
-	int data;
-	Node* next;
+#define LEFT_ARROW 75
+#define RIGHT_ARROW 77
+#define UP_ARROW 72
+#define DOWN_ARROW 80
+
+struct location
+{
+	int x;
+	int y;
+	location()
+	{
+		x=getScreenWidth();
+		y=getScreenHeight();
+	}
 };
 
-
-Node* insertLast( Node* h, int data )	//can also be called push_back
+struct body
 {
-	//Creates the linkedlist if it is not created 
-	if(h == NULL )
-	{
-		h = (Node*)malloc (sizeof(Node));	//Allocate memory for the new node
-		h->data = data;	//Insert the required data into the new node
-		h->next = NULL;	//Make sure the next pointer is pointing to NULL
-		return h;	//return the recently created node as the new header
-	}
-
-	Node *it = h;	//create an iterator (pointer) starting from the header
-	
-	//Position the iterator on the last node
+	char b;
+	int x,y;
+	body* next;
+	body* prev;
+};
+body* InsertBody(body* head)
+{
+	body* tmp;
+	tmp=(body*) malloc(sizeof(body));
+	tmp->b='0';
+	body *it=head;
 	while( it->next != NULL)
-		it = it->next;
+		it=it->next;
+	it->next=tmp;
+	tmp->prev=it;
+	tmp->next=NULL;
+	tmp->x=head->x;
+	tmp->y=head->y;
 
-	//Create the new node (to be inserted)
-	Node* tmp = (Node*)malloc( sizeof(Node) );
-	tmp->next = NULL;
-	tmp->data = data;
-
-	//Attach the new node to the original linkedlist
-	it->next = tmp;
-
-	//return the address of the modified linkedlist
-	return h;
-
+	return head;
 }
 
-Node* insertFirst( Node* h, int data )	//can also be called push_front
+void drawBounds()
 {
-	//Creates the linkedlist if it is not created 
-	if(h == NULL )
+	
+	location max;
+	int i, j;
+	for (i=0; i<=max.x; i++) //top margin
 	{
-		h = (Node*)malloc (sizeof(Node));	//Allocate memory for the new node
-		h->data = data;	//Insert the required data into the new node
-		h->next = NULL;	//Make sure the next pointer is pointing to NULL
-		return h;	//return the recently created node as the new header
+		goto_xy(i, 0);
+		printf("%c", 220);
 	}
-
-	//Create the new node (to be inserted)
-	Node* tmp = (Node*)malloc( sizeof(Node) );
-	tmp->data = data;
-	tmp->next = h;	//attach its next pointer to the header of the original linkedList
-
-	h = tmp;	//make sure the the header points to the first Node (recently inserted)
-
-	return h;	//return the address of the modified header
-
+	for(i=0; i<max.x; i++) //bottom margin
+	{
+		goto_xy(i, max.y);
+		printf("%c", 223);
+	}
+	for(j=1; j<max.y; j++) //leftmost margin
+	{
+		goto_xy(0, j);
+		printf("%c", 221);
+	}
+	for(j=1; j<max.y; j++) //rightmost margin
+	{
+		goto_xy(max.x-1, j);
+		printf("%c", 222);
+	}
 	
 }
-
-Node* removeLast( Node* h, int *removedData )
+body *Movement( body *head)
 {
-	//No LinkedList (user error )
-	if(h == NULL)
-		return NULL;
-
-	//only a single node exists
-	if(h->next == NULL)
-	{
-		*removedData = h->data;
-		free( h );
-		return NULL;	//return NULL, which means the LinkedList is destroyed and became empty
-	}
-
-	Node* it = h;
+	body *it=head;
+	while(it->next!=NULL)
+		it=it->next;
+	goto_xy(it->x, it->y);
+	printf(" ");
 	
-	//position the iterator on the node behind the last one
-	while( it->next->next != NULL)
-		it = it->next;
-
-	*removedData = it->next->data;	//take a copy of the data that will be removed
-	free( it->next );	//free the node (delete it)
-	it->next = NULL;	//make sure the last node's next pointer is pointing to NULL
-
-	return h;
-
-}
-
-Node* removeFirst( Node* h, int *removedData )
-{
-	//No LinkedList (user error )
-	if(h == NULL)
-		return NULL;
-
-	//only a single node exists
-	if(h->next == NULL)
-	{
-		*removedData = h->data;
-		free( h );
-		return NULL;	//return NULL, which means the LinkedList is destroyed and became empty
-	}
-
-	Node* tmp = h->next;	//take a copy of the 2nd node's address
-	*removedData = h->data;	//take a copy of the data that will be removed
-
-	free( h );	//free the first node (delete it)
-	
-	h = tmp;	//make sure that the header points to the correct node (2nd one) after removing the first node !
-
-	return h;
-
-}
-
-void printLinkedList( Node* h )
-{
-	//if the linkedList does not exist, then, stop the function
-	if(h == NULL)
-		return ;	
-
-	Node* it = h;
-	while( it != NULL)
-	{
-		printf("%d -> ", it->data);
-		it = it->next;
-	}
-	printf("NULL\n");
-}
-
-int getLinkedListSize( Node* h )
-{
-	if(h == NULL)
-		return 0;
-
-	int count = 0;
-	Node* it = h;
-	while( it != NULL)
-	{
-		count++;
-		it = it->next;
-	}
-	return count;
-}
-
-Node* findNode( Node* h, int reqData )
-{
-	if(h == NULL)
-		return NULL;
-	Node* it = h;
-	while( it != NULL )
-	{
-		if(it->data == reqData)
-			return it;	//it data matches, return the node's address
-		it = it->next;
-	}
-	return NULL;
-}
-
-Node* deleteNode( Node* h, Node *dataToDelete, bool *success )
-{
-	if(h == NULL)
-		return NULL;
-
-	//special case, if the header is the node to be deleted
-	if(h == dataToDelete)
-	{
-		Node* tmp = h->next;
-		free(h);
-		h = tmp;
-		*success = true;
-		return h;
-	}
-
-	Node* it = h;
-	while( it->next != NULL )
-	{
-		if( it->next == dataToDelete )
+		while(it->prev!=NULL)
 		{
-			Node* tmp = it->next->next;
-			free(it->next);
-			it->next = tmp;
-			*success = true;
-			return h;
+			it->x=it->prev->x;
+			it->y=it->prev->y;
+			it=it->prev;
 		}
-		it = it->next;
-	}
-	*success = false;
-	return h;
+		return head;
 }
-
-Node* mergeLinkedList( Node* h1, Node* h2 )
+void Print( body* head, body *food)
 {
-	if( h1 == NULL || h2 == NULL)	//if any of the LinkedLists don't exist, return h1 as the new list (even it is NULL !!!)
-		return h1;
+	body *it=head;
 	
-	Node* it = h1;
-
-	//Skip to the end of the first linkedList
-	while( it->next != NULL)
-		it = it->next;
-	//attach it to the 2nd linkedList
-	it->next = h2;
-
-	return h1;	//return the address of the modified linkedList (1st one)
-
+		while(it != NULL)
+		{
+			goto_xy(it->x,it->y);
+			printf("%c",it->b);
+			it=it->next;
+		}
+			goto_xy(food->x, food->y);
+			printf("%c", food->b);
 }
-bool isCyclic( Node* h )
+bool SelfHit( body* head )
 {
-	if( h == NULL || h->next == NULL )
+	if( head == NULL || head->next == NULL )
 		return false;
-
-	Node* slowIt = h;
-	Node* fastIt = h;
-
-	while( fastIt != NULL)
+	body* it = head;
+	while( it!= NULL)
 	{
-		if(fastIt->next == NULL)
+		if(it->next == NULL)
 			return false;
-
-		fastIt = fastIt->next->next;
-		slowIt = slowIt->next;
-
-		if(fastIt == slowIt)
+		it = it->next;
+		if((it->y==head->y && it->x==head->x))
 			return true;
 	}
 	return false;
 }
+
+
 void main()
 {
+	int x=40;
+	int st=0;
+	int factor=0,insertion=0,count=0;
+	bool can=false;
+	body* head, *food;
+	head=(body*) malloc(sizeof(body));
+	head->b='8';
+	head->x=getScreenWidth()/2;
+	head->y=getScreenHeight()/2;
+	head->next=head->prev=NULL;
 
-	//Create two empty linked Lists
-	Node* linkedList1 = NULL;	//the linkedlist's header must be pointing to NULL (initialization)
-	Node* linkedList2 = NULL;
-	int tmp;	//variable to be used later
-
-	printf("Inserting data into the FIRST linked list...\n");
-	//insert some data into the linked list
-	linkedList1 = insertLast( linkedList1, 1);
-	linkedList1 = insertLast( linkedList1, 2);
-	linkedList1 = insertLast( linkedList1, 3);
-	linkedList1 = insertLast( linkedList1, 4);
-	linkedList1 = insertLast( linkedList1, 5);
-	linkedList1 = insertLast( linkedList1, 6);
-	linkedList1 = insertLast( linkedList1, 7);
-	linkedList1 = insertLast( linkedList1, 8);
-
-	printf("Inserting data into the SECOND linked list...\n");
-	//insert some data into the linked list
-	linkedList2 = insertLast( linkedList2, 10);
-	linkedList2 = insertLast( linkedList2, 20);
-	linkedList2 = insertLast( linkedList2, 30);
-	linkedList2 = insertLast( linkedList2, 40);
-
-
-	printf("Printing the FIRST linked list...\n");
-	printLinkedList( linkedList1 );
-
-	printf("Printing the SECOND linked list...\n");
-	printLinkedList( linkedList2 );
-
-	printf("Removing the LAST two elements from the FIRST linked list...\n");
-	linkedList1 = removeLast(linkedList1, &tmp);	
-	linkedList1 = removeLast(linkedList1, &tmp);	
-
-	printf("Printing the FIRST linked list...\n");
-	printLinkedList( linkedList1 );
-
-	printf("Removing the FIRST element from the SECOND linked list...\n");
-	linkedList2 = removeFirst(linkedList2, &tmp);	
-
-	printf("Printing the SECOND linked list...\n");
-	printLinkedList( linkedList2 );
-
-	printf("Printing the size of both linked lists...\n");
-	printf("The size for the FIRST linked list is %d\n", getLinkedListSize(linkedList1) );
-	printf("The size for the SECOND linked list is %d\n", getLinkedListSize(linkedList2) );
-
-	printf("Merging the two linked lists (will only modify the FIRST linked list, the second one will remain intact)...\n");
-	linkedList1 = mergeLinkedList( linkedList1, linkedList2);
-
-	printf("Printing the FIRST linked list...\n");
-	printLinkedList( linkedList1 );
-	printf("Printing the SECOND linked list...\n");
-	printLinkedList( linkedList2 );
-
-	printf("Enter data to look for inside the FIRST linked list: ");
-	scanf("%d", &tmp);
-
-	if(findNode(linkedList1, tmp) != NULL)
-		printf("Data found !!!\n");
-	else
-		printf("Data not found !!!\n");
-	
-	printf("Enter data to delete from the first Linked List: ");
-	scanf("%d", &tmp);
-	Node* dNode = findNode(linkedList1, tmp);
-	bool success;
-	linkedList1 = deleteNode( linkedList1, dNode, &success); 
-	if(success == true )
-		printf("%d deleted !!!\n", tmp);
-	else
-		printf("%d is not found !!!\n", tmp);
-
-	printf("Printing the FIRST linked list...\n");
-	printLinkedList( linkedList1 );
-	
-
-
-	printf("Creating an intentional cycle in linked list 1...\n");
-	linkedList1->next->next = linkedList1->next;
-	
-	
- 	printf("Linked List 1 Cyclic ? (1=YES, 0=NO)   :   , %d\n", isCyclic(linkedList1) );
-	printf("Linked List 2 Cyclic ? (1=YES, 0=NO)   :   , %d\n", isCyclic(linkedList2) );
-	
+	food=(body*) malloc(sizeof (body*));
+	food->b='#';
+	food->next=food->prev=NULL;
+	food->x=getRandomNumber(getScreenWidth());
+	food->y=getRandomNumber(getScreenHeight());
 
 	getch();
-
-	
-
+	body* it=head;
+	for(int i=1; i<=5; i++)
+	{
+		head=InsertBody(head);
+		it->next->y=head->y;
+		it->next->x=head->x-i;
+		it=it->next;
+	}
+	it=head;
+	drawBounds();
+	while(it != NULL)
+	{
+		goto_xy(it->x, it->y);
+		printf("%c",it->b);
+		it=it->next;
+	}
+	while(ch !='e')
+	{
+		char a=ch;
+		if(kbhit())
+			ch=getch();
+			if(ch=='w' || ch==UP_ARROW)
+			{	
+				head=Movement(head);
+				head->y--;
+				Print(head,food);
+			}
+			else if(ch=='s' || ch==DOWN_ARROW)
+			{
+				head=Movement(head);
+				head->y++;
+				Print(head,food);	
+			}
+			else if(ch=='a' || ch==LEFT_ARROW)
+			{
+				head=Movement(head);
+				head->x--;
+				Print(head,food);
+			}
+			else if( ch=='d' || ch==RIGHT_ARROW)
+			{
+				head=Movement(head);
+				head->x++;
+				Print(head,food);
+			}
+			else if (ch=='e')
+				break;
+			else if (ch=='p')
+				while(!kbhit())
+					continue;
+			else
+				ch=a;
+			
+			if(food->x==head->x && food->y==head->y)
+			{
+				factor++;
+				if(count<10)
+					count++;
+				else
+					count+=(factor/5);
+				st++;
+				insertion=factor/10 +1;
+				for(int i=1; i<=insertion;i++)
+				{
+ 				head=InsertBody(head);
+				it=head;
+				while(it->next!=NULL)
+					it=it->next;
+				it->x=it->prev->x-(it->prev->prev->x-it->prev->x);
+				it->y=it->prev->y-(it->prev->prev->y-it->prev->y);
+				}
+				food->x=getRandomNumber(getScreenWidth()-1);
+				food->y=getRandomNumber(getScreenHeight()-1);
+			}	
+			if(st==2)
+			{
+				x--;
+				st=0;
+			}
+			if(count>=100)
+				break;
+		if (head->x==getScreenWidth() || head->y==getScreenHeight() || head->x==0 || head->y==0)
+			{
+				getch();
+				clearScreen();
+				goto_xy( getScreenWidth()/2, getScreenHeight()/2);
+				printf("WallHit\n");
+				goto_xy( getScreenWidth()/2, getScreenHeight()/2+1);
+				printf("Gameover Sucker\n");
+				goto_xy(getScreenWidth()/2, getScreenHeight()/2+2);
+				printf("Your Score = %d", count);
+				getch();
+				break;
+			}
+		can=SelfHit(head);
+			if(can==true)
+			{
+				getch();
+				clearScreen();
+				goto_xy( getScreenWidth()/2, getScreenHeight()/2);
+				printf("Selfhit\n");
+				goto_xy( getScreenWidth()/2, getScreenHeight()/2+1);
+				printf("Gameover Sucker\n");
+				goto_xy(getScreenWidth()/2, getScreenHeight()/2+2);
+				printf("Your Score = %d", count);
+				getch();
+				break;
+			}
+			Sleep(x);
+		}
+	if(count>=100)
+	{
+				clearScreen();
+				goto_xy(getScreenWidth()/2, getScreenHeight()/2);
+				printf("Your score = %d", count);
+				goto_xy(getScreenWidth()/2, getScreenHeight()/2+2);
+				printf("YOU WIN");
+	}
+	getch();
 }
